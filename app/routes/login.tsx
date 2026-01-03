@@ -1,6 +1,13 @@
-import { useState } from "react"
-import { redirect } from "react-router"
+import { useFetcher, redirect } from "react-router";
 import type { Route } from "./+types/login";
+import { z } from "zod";
+import { useForm, getFormProps, getInputProps } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+
+const schema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha mínima de 6 caracteres"),
+});
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -13,82 +20,73 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect("/loaders");
 }
 
-export default function Login({actionData}: Route.ComponentProps){
-  console.log(actionData);
+export default function Login() {
+  const fetcher = useFetcher();
 
-  const [formData, setFormData] = useState({
-    email: "henri.okayama@gmail.com",
-    password: "123456789",
+  const [form, fields] = useForm({
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema });
+    },
+    shouldValidate: "onBlur",
   });
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const busy = fetcher.state !== "idle";
 
   return (
-    <div style={{ maxWidth: "400px", margin: "50px auto", padding: "20px" }}>
+    <div style={{ maxWidth: 400, margin: "50px auto", padding: 20 }}>
       <h2>Login</h2>
-      <form method="POST">
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
-            Email:
-          </label>
+
+      <fetcher.Form {...getFormProps(form)} method="post">
+        <div style={{ marginBottom: 15 }}>
+          <label>Email</label>
           <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
+            {...getInputProps(fields.email, { type: "email" })}
+            defaultValue="henri.okayama@gmail.com"
             style={{
               width: "100%",
               padding: "8px",
               border: "1px solid #ccc",
-              borderRadius: "4px"
+              borderRadius: "4px",
             }}
           />
+          {fields.email.errors && (
+            <p style={{ color: "red" }}>{fields.email.errors}</p>
+          )}
         </div>
 
-        <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: "5px" }}>
-            Senha:
-          </label>
+        <div style={{ marginBottom: 15 }}>
+          <label>Senha</label>
           <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
+            {...getInputProps(fields.password, { type: "password" })}
+            defaultValue="123456789"
             style={{
               width: "100%",
               padding: "8px",
               border: "1px solid #ccc",
-              borderRadius: "4px"
+              borderRadius: "4px",
             }}
           />
+          {fields.password.errors && (
+            <p style={{ color: "red" }}>{fields.password.errors}</p>
+          )}
         </div>
 
         <button
           type="submit"
+          disabled={busy}
           style={{
             width: "100%",
             padding: "10px",
-            backgroundColor: "#007bff",
+            backgroundColor: busy ? "#999" : "#007bff",
             color: "white",
             border: "none",
             borderRadius: "4px",
-            cursor: "pointer"
+            cursor: busy ? "not-allowed" : "pointer",
           }}
         >
-          Entrar
+          {busy ? "Entrando..." : "Entrar"}
         </button>
-      </form>
+      </fetcher.Form>
     </div>
   );
 }
