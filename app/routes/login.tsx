@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { Route } from "./+types/login";
+import { useFetcher } from "react-router";
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -9,11 +10,17 @@ export async function action({ request }: Route.ActionArgs) {
     password: formData.get("password"),
   });
 
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
   return { ok: true };
 }
 
 export default function Login({actionData}: Route.ComponentProps){
   console.log(actionData);
+
+  const fetcher = useFetcher();
+  const busy = fetcher.state !== "idle";
+
   const [formData, setFormData] = useState({
     email: "henri.okayama@gmail.com",
     password: "123456789",
@@ -37,7 +44,7 @@ export default function Login({actionData}: Route.ComponentProps){
   return (
     <div style={{ maxWidth: "400px", margin: "50px auto", padding: "20px" }}>
       <h2>Login</h2>
-      <form method="POST" onSubmit={handleSubmit}>
+      <fetcher.Form method="POST" onSubmit={handleSubmit}>
         <div style={{ marginBottom: "15px" }}>
           <label htmlFor="email" style={{ display: "block", marginBottom: "5px" }}>
             Email:
@@ -79,6 +86,7 @@ export default function Login({actionData}: Route.ComponentProps){
         </div>
 
         <button
+          disabled={busy}
           type="submit"
           style={{
             width: "100%",
@@ -92,7 +100,7 @@ export default function Login({actionData}: Route.ComponentProps){
         >
           Entrar
         </button>
-      </form>
+      </fetcher.Form>
     </div>
   );
 }
