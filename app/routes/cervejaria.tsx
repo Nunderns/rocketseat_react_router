@@ -1,4 +1,5 @@
 import type { Route } from "./+types/cervejaria";
+import { ErrorBoundary } from "~/root";
 import { getBrewery } from "~/services/beer";
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -14,3 +15,5 @@ export default function Cervejaria({ loaderData }: Route.ComponentProps) {
     </div>
   );
 }
+
+export { ErrorBoundary };
